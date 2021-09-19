@@ -9,27 +9,27 @@ from werkzeug.security import generate_password_hash
 USERS_DIR = "./users/"
 PASSWD_MIN_LEN = 6
 
-def get_users():
-    return [{"username": Path(file).stem,
-            "hash": open(file).read()
-            } for file in glob.glob(f"{USERS_DIR}/*.hash")]
-
 class User(UserMixin):
-    users = get_users()
-
     def __init__(self, id, username=None, hash=None):
         self.id = id
         self.name = username
         self.hash = hash
 
     @classmethod
-    def get(self, user_id):
+    def get_users(cls):
+        return [{"username": Path(file).stem,
+                "hash": open(file).read()
+                } for file in glob.glob(f"{USERS_DIR}/*.hash")]
+
+    @classmethod
+    def get(cls, user_id):
+        users = cls.get_users()
         try:
             index = int(user_id)
         except ValueError:
             return
-        if index < len(self.users):
-            return User(user_id, **self.users[index])
+        if index < len(users):
+            return User(user_id, **users[index])
 
 def create_user():
     Path(USERS_DIR).mkdir(exist_ok=True)

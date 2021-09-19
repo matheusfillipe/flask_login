@@ -6,7 +6,6 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import check_password_hash
 
-from ampf_report import ampf_report_init, get_t, get_ampf_refresh, process_form
 from users import User
 
 
@@ -17,7 +16,7 @@ def is_safe_url(target):
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 def create_app():
-    app = Flask(__name__, static_folder='data', static_url_path='/data')
+    app = Flask(__name__)
     app.config["DEBUG"] = True
     app.config['SECRET_KEY'] = b'whatshoulditbe'
 
@@ -28,8 +27,6 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.get(user_id)
-
-    Mobility(app)
 
     return app
 
@@ -43,12 +40,11 @@ limiter = Limiter(
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("50/day;3/minute")
 def login():
-    # TODO ip hit limiting
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         remember = True if request.form.get('remember') else False
-        for user_id, user in enumerate(User.users):
+        for user_id, user in enumerate(User.get_users()):
             if user['username'] == username and check_password_hash(user['hash'], password):
                 login_user(User.get(user_id), remember=remember)
                 next = request.args.get('next')
@@ -63,9 +59,11 @@ def logout():
     logout_user()
     return Response('<p>Logged out</p>')
 
+@app.route("/")
+@login_required
 @login_required
 def index():
-    return Response("Hello World!")
+    return render_template('index.html')
 
 def main():
     app.run()
