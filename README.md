@@ -6,7 +6,7 @@ My simple demo of how to use [flask_login](https://flask-login.readthedocs.io/en
 
 ``` sh
 # install dependencies
-pip install flask flask-login
+pip install flask flask-login Flask-Limiter
 
 # Add users
 ./users.py
