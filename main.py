@@ -37,20 +37,23 @@ limiter = Limiter(
     key_func=get_remote_address,
 )
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 @limiter.limit("50/day;3/minute")
+def login_post():
+    username = request.form['username']
+    password = request.form['password']
+    remember = True if request.form.get('remember') else False
+    for user_id, user in enumerate(User.get_users()):
+        if user['username'] == username and check_password_hash(user['hash'], password):
+            login_user(User.get(user_id), remember=remember)
+            next = request.args.get('next')
+            next = None if next == url_for("logout") else next
+            return redirect(next or url_for('index'))
+    flash('Please check your login details and try again.')
+    return render_template('login.html')
+
+@app.route('/login', methods=['GET'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        remember = True if request.form.get('remember') else False
-        for user_id, user in enumerate(User.get_users()):
-            if user['username'] == username and check_password_hash(user['hash'], password):
-                login_user(User.get(user_id), remember=remember)
-                next = request.args.get('next')
-                next = None if next == url_for("logout") else next
-                return redirect(next or url_for('index'))
-        flash('Please check your login details and try again.')
     return render_template('login.html')
 
 @app.route("/logout")
@@ -61,12 +64,11 @@ def logout():
 
 @app.route("/")
 @login_required
-@login_required
 def index():
     return render_template('index.html')
 
 def main():
-    app.run()
+    app.run(host="0.0.0.0")
 
 if __name__ == "__main__":
     main()
