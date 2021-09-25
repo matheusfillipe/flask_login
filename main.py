@@ -47,6 +47,8 @@ def login_post():
         if user['username'] == username and check_password_hash(user['hash'], password):
             login_user(User.get(user_id), remember=remember)
             next = request.args.get('next')
+            if not is_safe_url(next):
+                return flask.abort(400)
             next = None if next == url_for("logout") else next
             return redirect(next or url_for('index'))
     flash('Please check your login details and try again.')
