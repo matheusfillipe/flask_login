@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import os
+from datetime import timedelta
+
 from flask import Flask, redirect, render_template, request, send_from_directory, jsonify, flash, url_for, Response
 from flask_login import LoginManager, login_required, login_user, logout_user
 from flask_limiter import Limiter
@@ -45,7 +46,7 @@ def login_post():
     remember = True if request.form.get('remember') else False
     for user_id, user in enumerate(User.get_users()):
         if user['username'] == username and check_password_hash(user['hash'], password):
-            login_user(User.get(user_id), remember=remember)
+            login_user(User.get(user_id), remember=remember, duration=timedelta(days=180))
             next = request.args.get('next')
             if not is_safe_url(next):
                 return flask.abort(400)
